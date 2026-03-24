@@ -13,6 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.border
 import androidx.compose.foundation.Image
 import androidx.compose.material.icons.Icons
@@ -51,15 +54,76 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun DaftarMakananScreen() {
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp)
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        FoodSource.dummyFood.forEach { food ->
-            DetailScreen(food = food)
-            Spacer(modifier = Modifier.height(24.dp))
+
+        item {
+            Column {
+                Text(
+                    text = "Cemilan Favorit",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Rekomendasi buat kamu",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(FoodSource.dummyFood) { food ->
+                        Card(
+                            modifier = Modifier
+                                .width(140.dp)
+                                .height(160.dp)
+                        ) {
+                            Column {
+                                Image(
+                                    painter = painterResource(id = food.imageRes),
+                                    contentDescription = food.nama,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(100.dp),
+                                    contentScale = ContentScale.Crop
+                                )
+
+                                Column(modifier = Modifier.padding(8.dp)) {
+                                    Text(
+                                        text = food.nama,
+                                        fontWeight = FontWeight.Bold
+                                    )
+
+                                    Text(
+                                        text = "Rp ${food.harga}"
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Semua Menu",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
+        items(FoodSource.dummyFood) { food ->
+            DetailScreen(food)
         }
     }
 }
