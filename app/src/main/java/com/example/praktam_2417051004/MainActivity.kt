@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -65,8 +63,7 @@ fun DaftarMakananScreen() {
             Column {
                 Text(
                     text = "Cemilan Favorit",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleLarge,
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -85,7 +82,10 @@ fun DaftarMakananScreen() {
                         Card(
                             modifier = Modifier
                                 .width(140.dp)
-                                .height(160.dp)
+                                .height(160.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surface
+                            )
                         ) {
                             Column {
                                 Image(
@@ -100,11 +100,12 @@ fun DaftarMakananScreen() {
                                 Column(modifier = Modifier.padding(8.dp)) {
                                     Text(
                                         text = food.nama,
-                                        fontWeight = FontWeight.Bold
+                                        style = MaterialTheme.typography.titleMedium
                                     )
 
                                     Text(
-                                        text = "Rp ${food.harga}"
+                                        text = "Rp ${food.harga}",
+                                        color = MaterialTheme.colorScheme.secondary
                                     )
                                 }
                             }
@@ -116,8 +117,7 @@ fun DaftarMakananScreen() {
 
                 Text(
                     text = "Semua Menu",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleLarge
                 )
             }
         }
@@ -136,6 +136,7 @@ fun DetailScreen(food: Cemil) {
             .fillMaxWidth()
             .border(4.dp, Color.Gray)
             .padding(16.dp)
+
     ){
         Row {
             Box {
@@ -165,22 +166,22 @@ fun DetailScreen(food: Cemil) {
             Column {
                 Text(
                     text = food.nama,
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleLarge
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
                     text = food.deskripsi,
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyMedium
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
                     text = "Harga: Rp ${food.harga}",
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
@@ -191,7 +192,7 @@ fun DetailScreen(food: Cemil) {
             onClick = {},
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFF9800)
+                    containerColor = MaterialTheme.colorScheme.secondary
                 )
             ){
                 Text("Pesan Sekarang")
