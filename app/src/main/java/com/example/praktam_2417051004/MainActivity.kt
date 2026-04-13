@@ -24,11 +24,15 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -36,7 +40,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,7 +77,6 @@ fun DaftarMakananScreen() {
                     text = "Rekomendasi buat kamu",
                     style = MaterialTheme.typography.bodyMedium
                 )
-
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -132,13 +136,17 @@ fun DaftarMakananScreen() {
 @Composable
 fun DetailScreen(food: Cemil) {
     var isFavorite by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+    Box(modifier = Modifier.fillMaxWidth()) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .border(4.dp, Color.Gray)
             .padding(16.dp)
 
-    ){
+    ) {
         Row {
             Box {
                 Image(
@@ -190,15 +198,43 @@ fun DetailScreen(food: Cemil) {
         Spacer(modifier = Modifier.height(6.dp))
 
         Button(
-            onClick = {},
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary
+            onClick = {
+                coroutineScope.launch {
+                    isLoading = true
+                    delay(2000)
+
+                    snackbarHostState.showSnackbar(
+                        "Pesanan ${food.nama} berhasil diproses!"
+                    )
+
+                    isLoading = false
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isLoading,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 2.dp
                 )
-            ){
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Memproses...")
+            } else {
                 Text("Pesan Sekarang")
             }
+        }
     }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
+    }
+
 }
 
 @Preview(showBackground = true)
