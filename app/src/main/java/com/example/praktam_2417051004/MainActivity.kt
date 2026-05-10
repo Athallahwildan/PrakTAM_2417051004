@@ -31,12 +31,13 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.praktam_2417051004.model.Cemil
-import com.example.praktam_2417051004.network.RetrofitClient
+import com.example.praktam_2417051004.data.model.Cemil
+import com.example.praktam_2417051004.data.api.RetrofitClient
 import com.example.praktam_2417051004.ui.theme.PrakTAM_2417051004Theme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import coil.compose.AsyncImage
+import com.example.praktam_2417051004.data.repository.FoodRepository
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -78,21 +79,17 @@ fun AppNavigation(navController: NavController) {
 
 @Composable
 fun DaftarMakananScreen(navController: NavController, onFoodsLoaded: (List<Cemil>) -> Unit = {}) {
-
     var foods by remember { mutableStateOf<List<Cemil>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var isError by remember { mutableStateOf(false) }
+    val repository = remember { FoodRepository() }
 
     LaunchedEffect(Unit) {
-        try {
-            foods = RetrofitClient.instance.getFoods()
-            onFoodsLoaded(foods)
-            isLoading = false
-            isError = false
-        } catch (e: Exception) {
-            isLoading = false
-            isError = true
-        }
+        isLoading = true
+        foods = repository.getFoods()
+        onFoodsLoaded(foods)
+        isLoading = false
+        isError = foods.isEmpty()
     }
 
     if (isLoading) {

@@ -1,4 +1,5 @@
-package com.example.praktam_2417051004.model
+package com.example.praktam_2417051004.data.model
+
 import com.google.gson.annotations.SerializedName
 
 data class Cemil(
