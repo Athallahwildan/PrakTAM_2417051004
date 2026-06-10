@@ -13,7 +13,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -55,15 +58,29 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation(navController: NavController) {
     var foods by remember { mutableStateOf<List<Cemil>>(emptyList()) }
+    var favoriteFoods by remember { mutableStateOf<List<Cemil>>(emptyList()) }
+
+    val onFavoriteClick: (Cemil) -> Unit = { selectedFood ->
+        favoriteFoods = if (favoriteFoods.contains(selectedFood)) {
+            favoriteFoods - selectedFood
+        } else {
+            favoriteFoods + selectedFood
+        }
+    }
 
     NavHost(
         navController = navController as androidx.navigation.NavHostController,
         startDestination = "home"
     ) {
         composable("home") {
-            DaftarMakananScreen(navController) { fetchedFoods ->
-                foods = fetchedFoods
-            }
+            DaftarMakananScreen(
+                navController = navController,
+                favoriteFoods = favoriteFoods,
+                onFavoriteClick = onFavoriteClick,
+                onFoodsLoaded = { fetchedFoods ->
+                    foods = fetchedFoods
+                }
+            )
         }
 
         composable("detail/{nama}") { backStackEntry ->
@@ -71,14 +88,104 @@ fun AppNavigation(navController: NavController) {
             val food = foods.find { it.nama == nama }
 
             if (food != null) {
-                DetailScreen(food = food, navController = navController, isFullScreen = true)
+                DetailScreen(
+                    food = food,
+                    navController = navController,
+                    isFullScreen = true,
+                    favoriteFoods = favoriteFoods,
+                    onFavoriteClick = onFavoriteClick
+                )
+            }
+        }
+
+        composable("favorites") {
+            FavoriteScreen(
+                navController = navController,
+                favoriteFoods = favoriteFoods,
+                onFavoriteClick = onFavoriteClick
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FavoriteScreen(
+    navController: NavController,
+    favoriteFoods: List<Cemil>,
+    onFavoriteClick: (Cemil) -> Unit
+) {
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("Favorit Saya", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(
+                        onClick = { 
+                            navController.navigate("home") {
+                                popUpTo("home") { inclusive = true }
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Kembali"
+                        )
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        if (favoriteFoods.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = Color.LightGray
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Belum ada cemilan favorit",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.Gray
+                    )
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(favoriteFoods) { food ->
+                    FoodItem(
+                        food = food,
+                        navController = navController,
+                        favoriteFoods = favoriteFoods,
+                        onFavoriteClick = onFavoriteClick
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun DaftarMakananScreen(navController: NavController, onFoodsLoaded: (List<Cemil>) -> Unit = {}) {
+fun DaftarMakananScreen(
+    navController: NavController,
+    favoriteFoods: List<Cemil>,
+    onFavoriteClick: (Cemil) -> Unit,
+    onFoodsLoaded: (List<Cemil>) -> Unit = {}
+) {
     var foods by remember { mutableStateOf<List<Cemil>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var isError by remember { mutableStateOf(false) }
@@ -90,6 +197,32 @@ fun DaftarMakananScreen(navController: NavController, onFoodsLoaded: (List<Cemil
         onFoodsLoaded(foods)
         isLoading = false
         isError = foods.isEmpty()
+    }
+    var selectedCategory by remember { mutableStateOf("Semua") }
+
+    var searchQuery by remember { mutableStateOf("") }
+
+    val filteredFoods = foods.filter { food ->
+        val matchSearch =
+            food.nama.contains(searchQuery, ignoreCase = true)
+
+        val matchCategory = when (selectedCategory) {
+            "Pedas" ->
+                food.nama.contains("pedas", true) ||
+                        food.deskripsi.contains("pedas", true)
+
+            "Original" ->
+                food.nama.contains("original", true) ||
+                        food.deskripsi.contains("original", true)
+
+            "Manis" ->
+                food.nama.contains("manis", true) ||
+                        food.deskripsi.contains("manis", true)
+
+            else -> true
+        }
+
+        matchSearch && matchCategory
     }
 
     if (isLoading) {
@@ -147,44 +280,127 @@ fun DaftarMakananScreen(navController: NavController, onFoodsLoaded: (List<Cemil
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        items(foods) { food ->
-                            Card(
-                                modifier = Modifier
-                                    .width(160.dp)
-                                    .clickable {
-                                        navController.navigate("detail/${food.nama}")
-                                    },
-                                shape = RoundedCornerShape(12.dp),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surface
-                                )
-                            ) {
-                                Column {
-                                    AsyncImage(
-                                        model = food.imageUrl,
-                                        contentDescription = food.nama,
-                                        placeholder = painterResource(id = R.drawable.basreng),
-                                        error = painterResource(id = R.drawable.basreng),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(100.dp),
-                                        contentScale = ContentScale.Crop
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            label = { Text("Cari Cemilan") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            leadingIcon = {
+                                Icon(Icons.Default.Search, contentDescription = null)
+                            },
+                            trailingIcon = {
+                                if (searchQuery.isNotEmpty()) {
+                                    IconButton(onClick = { searchQuery = "" }) {
+                                        Icon(Icons.Default.Clear, contentDescription = "Clear")
+                                    }
+                                }
+                            }
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        IconButton(
+                            onClick = { 
+                                navController.navigate("favorites") {
+                                    launchSingleTop = true
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.FavoriteBorder,
+                                contentDescription = "Favorit Saya"
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+
+                        item {
+                            FilterChip(
+                                selected = selectedCategory == "Semua",
+                                onClick = { selectedCategory = "Semua" },
+                                label = { Text("Semua") }
+                            )
+                        }
+
+                        item {
+                            FilterChip(
+                                selected = selectedCategory == "Pedas",
+                                onClick = { selectedCategory = "Pedas" },
+                                label = { Text("Pedas") }
+                            )
+                        }
+
+                        item {
+                            FilterChip(
+                                selected = selectedCategory == "Original",
+                                onClick = { selectedCategory = "Original" },
+                                label = { Text("Original") }
+                            )
+                        }
+
+                        item {
+                            FilterChip(
+                                selected = selectedCategory == "Manis",
+                                onClick = { selectedCategory = "Manis" },
+                                label = { Text("Manis") }
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    if (filteredFoods.isNotEmpty()) {
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(filteredFoods) { food ->
+                                Card(
+                                    modifier = Modifier
+                                        .width(160.dp)
+                                        .clickable {
+                                            navController.navigate("detail/${food.nama}")
+                                        },
+                                    shape = RoundedCornerShape(12.dp),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surface
                                     )
-
-                                    Column(modifier = Modifier.padding(8.dp)) {
-                                        Text(
-                                            text = food.nama,
-                                            style = MaterialTheme.typography.titleMedium
+                                ) {
+                                    Column {
+                                        AsyncImage(
+                                            model = food.imageUrl,
+                                            contentDescription = food.nama,
+                                            placeholder = painterResource(id = R.drawable.basreng),
+                                            error = painterResource(id = R.drawable.basreng),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(100.dp),
+                                            contentScale = ContentScale.Crop
                                         )
 
-                                        Text(
-                                            text = "Rp ${food.harga}",
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
+                                        Column(modifier = Modifier.padding(8.dp)) {
+                                            Text(
+                                                text = food.nama,
+                                                style = MaterialTheme.typography.titleMedium
+                                            )
+
+                                            Text(
+                                                text = "Rp ${food.harga}",
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -200,22 +416,60 @@ fun DaftarMakananScreen(navController: NavController, onFoodsLoaded: (List<Cemil
                 }
             }
 
-            items(foods) { food ->
-                FoodItem(food = food, navController = navController)
+            if (filteredFoods.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Cemilan tidak ditemukan",
+                            color = Color.Gray,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+            } else {
+                items(filteredFoods) { food ->
+                    FoodItem(
+                        food = food,
+                        navController = navController,
+                        favoriteFoods = favoriteFoods,
+                        onFavoriteClick = onFavoriteClick
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun FoodItem(food: Cemil, navController: NavController) {
-    DetailScreen(food = food, navController = navController, isFullScreen = false)
+fun FoodItem(
+    food: Cemil,
+    navController: NavController,
+    favoriteFoods: List<Cemil>,
+    onFavoriteClick: (Cemil) -> Unit
+) {
+    DetailScreen(
+        food = food,
+        navController = navController,
+        isFullScreen = false,
+        favoriteFoods = favoriteFoods,
+        onFavoriteClick = onFavoriteClick
+    )
 }
 
 @Composable
-fun DetailScreen(food: Cemil, navController: NavController, isFullScreen: Boolean = false) {
-
-    var isFavorite by remember { mutableStateOf(false) }
+fun DetailScreen(
+    food: Cemil,
+    navController: NavController,
+    isFullScreen: Boolean = false,
+    favoriteFoods: List<Cemil>,
+    onFavoriteClick: (Cemil) -> Unit
+) {
+    val isFavorite = favoriteFoods.contains(food)
     var isOrderLoading by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -244,7 +498,9 @@ fun DetailScreen(food: Cemil, navController: NavController, isFullScreen: Boolea
                     )
 
                     IconButton(
-                        onClick = { isFavorite = !isFavorite },
+                        onClick = {
+                            onFavoriteClick(food)
+                        },
                         modifier = Modifier.align(Alignment.TopStart)
                     ) {
                         Icon(
@@ -270,6 +526,14 @@ fun DetailScreen(food: Cemil, navController: NavController, isFullScreen: Boolea
                         style = MaterialTheme.typography.bodyMedium
                     )
 
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "Ukuran: ${food.ukuran}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
@@ -291,7 +555,9 @@ fun DetailScreen(food: Cemil, navController: NavController, isFullScreen: Boolea
                         )
 
                         IconButton(
-                            onClick = { isFavorite = !isFavorite },
+                            onClick = {
+                                onFavoriteClick(food)
+                            },
                             modifier = Modifier.align(Alignment.TopStart)
                         ) {
                             Icon(
@@ -315,6 +581,14 @@ fun DetailScreen(food: Cemil, navController: NavController, isFullScreen: Boolea
                         Text(
                             text = food.deskripsi,
                             style = MaterialTheme.typography.bodyMedium
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            text = "Ukuran: ${food.ukuran}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))

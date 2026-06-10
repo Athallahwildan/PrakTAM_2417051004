@@ -9,6 +9,9 @@ data class Cemil(
     @SerializedName("deskripsi")
     val deskripsi: String,
 
+    @SerializedName("ukuran")
+    val ukuran: String,
+
     @SerializedName("harga")
     val harga: Int,
 
