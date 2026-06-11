@@ -3,6 +3,7 @@ package com.example.praktam_2417051004.ui.navigation
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -23,6 +24,7 @@ import com.example.praktam_2417051004.ui.screen.history.HistoryScreen
 import com.example.praktam_2417051004.ui.screen.home.HomeScreen
 import com.example.praktam_2417051004.ui.screen.login.LoginScreen
 import com.example.praktam_2417051004.ui.screen.profile.ProfileScreen
+import com.example.praktam_2417051004.ui.screen.register.RegisterScreen
 import com.example.praktam_2417051004.ui.viewmodel.AuthViewModel
 import com.example.praktam_2417051004.ui.viewmodel.FoodViewModel
 
@@ -36,6 +38,15 @@ fun AppNavigation(navController: NavHostController) {
     val currentDestination = navBackStackEntry?.destination
 
     val startDestination = if (authViewModel.isLoggedIn) Screen.Home.route else "login"
+
+    LaunchedEffect(authViewModel.isLoggedIn, authViewModel.currentUser) {
+        val user = authViewModel.currentUser
+        if (authViewModel.isLoggedIn && user != null) {
+            foodViewModel.setUser(user.username)
+        } else {
+            foodViewModel.clearUserData()
+        }
+    }
 
     val bottomBarScreens = listOf(
         Screen.Home,
@@ -104,6 +115,13 @@ fun AppNavigation(navController: NavHostController) {
                 )
             }
 
+            composable("register") {
+                RegisterScreen(
+                    navController = navController,
+                    authViewModel = authViewModel
+                )
+            }
+
             composable(Screen.Home.route) {
                 HomeScreen(
                     navController = navController,
@@ -114,7 +132,8 @@ fun AppNavigation(navController: NavHostController) {
             composable(Screen.Profile.route) {
                 ProfileScreen(
                     navController = navController,
-                    authViewModel = authViewModel
+                    authViewModel = authViewModel,
+                    foodViewModel = foodViewModel
                 )
             }
 

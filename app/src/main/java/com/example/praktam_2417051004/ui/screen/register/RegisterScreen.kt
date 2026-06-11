@@ -1,8 +1,10 @@
-package com.example.praktam_2417051004.ui.screen.login
+package com.example.praktam_2417051004.ui.screen.register
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,46 +18,66 @@ import com.example.praktam_2417051004.R
 import com.example.praktam_2417051004.ui.viewmodel.AuthViewModel
 
 @Composable
-fun LoginScreen(
+fun RegisterScreen(
     navController: NavController,
     authViewModel: AuthViewModel
 ) {
+    var name by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showError by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Image(
             painter = painterResource(id = R.drawable.logo_cemilin),
             contentDescription = "Logo",
-            modifier = Modifier.size(150.dp)
+            modifier = Modifier.size(100.dp)
         )
         
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         
         Text(
-            text = "Selamat Datang!",
-            style = MaterialTheme.typography.headlineMedium,
+            text = "Daftar Akun Baru",
+            style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
         
-        Text(
-            text = "Silakan login untuk melanjutkan",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.outline
-        )
-        
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         
         OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text("Nama Lengkap") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            shape = RoundedCornerShape(24.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Email") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            shape = RoundedCornerShape(24.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
             value = username,
-            onValueChange = { username = it; showError = false },
+            onValueChange = { username = it },
             label = { Text("Username") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
@@ -66,7 +88,7 @@ fun LoginScreen(
         
         OutlinedTextField(
             value = password,
-            onValueChange = { password = it; showError = false },
+            onValueChange = { password = it },
             label = { Text("Password") },
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation(),
@@ -76,7 +98,7 @@ fun LoginScreen(
         
         if (showError) {
             Text(
-                text = "Username atau password tidak boleh kosong",
+                text = errorMessage,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 8.dp)
@@ -87,22 +109,26 @@ fun LoginScreen(
         
         Button(
             onClick = {
-                if (authViewModel.login(username, password)) {
-                    navController.navigate("home") {
-                        popUpTo("login") { inclusive = true }
-                    }
-                } else {
+                if (name.isBlank() || email.isBlank() || username.isBlank() || password.isBlank()) {
+                    errorMessage = "Semua kolom harus diisi"
                     showError = true
+                } else {
+                    if (authViewModel.register(name, email, username, password)) {
+                        navController.popBackStack()
+                    } else {
+                        errorMessage = "Username sudah terdaftar"
+                        showError = true
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.medium
         ) {
-            Text("Login")
+            Text("Daftar Sekarang")
         }
 
-        TextButton(onClick = { navController.navigate("register") }) {
-            Text("Belum punya akun? Daftar di sini")
+        TextButton(onClick = { navController.popBackStack() }) {
+            Text("Sudah punya akun? Login di sini")
         }
     }
 }

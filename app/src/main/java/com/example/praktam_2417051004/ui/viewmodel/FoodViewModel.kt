@@ -20,6 +20,7 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = FoodRepository()
     private val sharedPreferences = application.getSharedPreferences("food_prefs", Context.MODE_PRIVATE)
     private val gson = Gson()
+    private var currentUsername: String = ""
 
     var foods by mutableStateOf<List<Cemil>>(emptyList())
         private set
@@ -43,8 +44,40 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
         private set
 
     init {
-        loadFromPrefs()
         fetchFoods()
+    }
+
+    fun setUser(username: String) {
+        if (currentUsername != username) {
+            currentUsername = username
+            loadFromPrefs()
+        }
+    }
+
+    fun migrateUserData(oldUsername: String, newUsername: String) {
+        val favJson = sharedPreferences.getString("favorites_$oldUsername", null)
+        val cartJson = sharedPreferences.getString("cart_$oldUsername", null)
+        val historyJson = sharedPreferences.getString("history_$oldUsername", null)
+
+        sharedPreferences.edit().apply {
+            if (favJson != null) putString("favorites_$newUsername", favJson)
+            if (cartJson != null) putString("cart_$newUsername", cartJson)
+            if (historyJson != null) putString("history_$newUsername", historyJson)
+            
+            remove("favorites_$oldUsername")
+            remove("cart_$oldUsername")
+            remove("history_$oldUsername")
+            apply()
+        }
+        currentUsername = newUsername
+    }
+
+    fun clearUserData() {
+        currentUsername = ""
+        favoriteFoods = emptyList()
+        cartFoods = emptyList()
+        selectedCartItems = emptySet()
+        orderHistory = emptyList()
     }
 
     fun fetchFoods() {
@@ -64,30 +97,28 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun loadFromPrefs() {
-        val favJson = sharedPreferences.getString("favorites", null)
-        val cartJson = sharedPreferences.getString("cart", null)
-        val historyJson = sharedPreferences.getString("history", null)
+        if (currentUsername.isEmpty()) return
 
-        if (favJson != null) {
-            val type = object : TypeToken<List<Cemil>>() {}.type
-            favoriteFoods = gson.fromJson(favJson, type)
-        }
-        if (cartJson != null) {
-            val type = object : TypeToken<List<Cemil>>() {}.type
-            cartFoods = gson.fromJson(cartJson, type)
-            selectedCartItems = cartFoods.map { it.nama }.toSet()
-        }
-        if (historyJson != null) {
-            val type = object : TypeToken<List<OrderHistory>>() {}.type
-            orderHistory = gson.fromJson(historyJson, type)
-        }
+        val favJson = sharedPreferences.getString("favorites_$currentUsername", null)
+        val cartJson = sharedPreferences.getString("cart_$currentUsername", null)
+        val historyJson = sharedPreferences.getString("history_$currentUsername", null)
+
+        val foodListType = object : TypeToken<List<Cemil>>() {}.type
+        val historyListType = object : TypeToken<List<OrderHistory>>() {}.type
+
+        favoriteFoods = if (favJson != null) gson.fromJson(favJson, foodListType) else emptyList()
+        cartFoods = if (cartJson != null) gson.fromJson(cartJson, foodListType) else emptyList()
+        selectedCartItems = cartFoods.map { it.nama }.toSet()
+        orderHistory = if (historyJson != null) gson.fromJson(historyJson, historyListType) else emptyList()
     }
 
     private fun saveToPrefs() {
+        if (currentUsername.isEmpty()) return
+
         sharedPreferences.edit().apply {
-            putString("favorites", gson.toJson(favoriteFoods))
-            putString("cart", gson.toJson(cartFoods))
-            putString("history", gson.toJson(orderHistory))
+            putString("favorites_$currentUsername", gson.toJson(favoriteFoods))
+            putString("cart_$currentUsername", gson.toJson(cartFoods))
+            putString("history_$currentUsername", gson.toJson(orderHistory))
             apply()
         }
     }
