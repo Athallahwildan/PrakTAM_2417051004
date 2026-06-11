@@ -31,9 +31,9 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Image(
-            painter = painterResource(id = R.drawable.basreng),
+            painter = painterResource(id = R.drawable.logo_cemilin),
             contentDescription = "Logo",
-            modifier = Modifier.size(120.dp)
+            modifier = Modifier.size(150.dp)
         )
         
         Spacer(modifier = Modifier.height(32.dp))

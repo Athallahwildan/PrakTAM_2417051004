@@ -1,16 +1,20 @@
 package com.example.praktam_2417051004.ui.navigation
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.praktam_2417051004.ui.screen.cart.CartScreen
 import com.example.praktam_2417051004.ui.screen.checkout.CheckoutScreen
 import com.example.praktam_2417051004.ui.screen.detail.DetailScreen
@@ -28,11 +32,65 @@ fun AppNavigation(navController: NavHostController) {
     val authViewModel: AuthViewModel = viewModel()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Start destination depends on login status
-    val startDestination = if (authViewModel.isLoggedIn) "home" else "login"
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
+
+    val startDestination = if (authViewModel.isLoggedIn) Screen.Home.route else "login"
+
+    val bottomBarScreens = listOf(
+        Screen.Home,
+        Screen.Favorite,
+        Screen.History,
+        Screen.Profile
+    )
+
+    val showBottomBar = bottomBarScreens.any { it.route == currentDestination?.route }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        bottomBar = {
+            if (showBottomBar) {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    tonalElevation = 8.dp
+                ) {
+                    bottomBarScreens.forEach { screen ->
+                        val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
+                        NavigationBarItem(
+                            icon = { 
+                                Icon(
+                                    imageVector = screen.icon, 
+                                    contentDescription = screen.title,
+                                    tint = if (selected) MaterialTheme.colorScheme.primary else Color.Gray
+                                ) 
+                            },
+                            label = { 
+                                Text(
+                                    text = screen.title,
+                                    color = if (selected) MaterialTheme.colorScheme.primary else Color.Gray
+                                ) 
+                            },
+                            selected = selected,
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                unselectedIconColor = Color.Gray,
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                            ),
+                            onClick = {
+                                navController.navigate(screen.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+        }
     ) { padding ->
         NavHost(
             navController = navController,
@@ -46,14 +104,14 @@ fun AppNavigation(navController: NavHostController) {
                 )
             }
 
-            composable("home") {
+            composable(Screen.Home.route) {
                 HomeScreen(
                     navController = navController,
                     viewModel = foodViewModel
                 )
             }
 
-            composable("profile") {
+            composable(Screen.Profile.route) {
                 ProfileScreen(
                     navController = navController,
                     authViewModel = authViewModel
@@ -74,7 +132,7 @@ fun AppNavigation(navController: NavHostController) {
                 }
             }
 
-            composable("favorites") {
+            composable(Screen.Favorite.route) {
                 FavoriteScreen(
                     navController = navController,
                     viewModel = foodViewModel
@@ -97,7 +155,7 @@ fun AppNavigation(navController: NavHostController) {
                 )
             }
 
-            composable("history") {
+            composable(Screen.History.route) {
                 HistoryScreen(
                     navController = navController,
                     viewModel = foodViewModel

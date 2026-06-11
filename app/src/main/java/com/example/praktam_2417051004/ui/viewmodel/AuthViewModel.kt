@@ -34,12 +34,11 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun login(username: String, password: String): Boolean {
-        // Dummy logic login
-        if (username.isNotEmpty() && password.isNotEmpty()) {
+        if (username == "athallah" && password == "1234") {
             val user = User(
-                username = username,
-                name = "Pengguna $username",
-                email = "$username@email.com"
+                username = "athallah",
+                name = "Athallah",
+                email = "athallah23@email.com"
             )
             currentUser = user
             isLoggedIn = true
