@@ -56,8 +56,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun updateProfile(newName: String, newEmail: String, newUsername: String, newPassword: String? = null): Boolean {
         val oldUser = currentUser ?: return false
         val users = getRegisteredUsers()
-        
-        // Jika username ganti, cek apakah username baru sudah dipakai orang lain
+
         if (newUsername != oldUser.username && users.containsKey(newUsername)) return false
 
         val userData = users[oldUser.username]?.toMutableMap() ?: mutableMapOf()
