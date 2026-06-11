@@ -1,10 +1,13 @@
 package com.example.praktam_2417051004.ui.screen.checkout
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.praktam_2417051004.ui.components.CustomTopAppBar
@@ -20,6 +23,8 @@ fun CheckoutScreen(
     var alamat by remember { mutableStateOf("") }
     var noHp by remember { mutableStateOf("") }
     var showSuccess by remember { mutableStateOf(false) }
+    val isNoHpValid = noHp.length in 10..12 && noHp.all { it.isDigit() }
+    val isFormValid = nama.isNotBlank() && alamat.isNotBlank() && isNoHpValid
 
     Scaffold(
         topBar = {
@@ -80,10 +85,25 @@ fun CheckoutScreen(
 
             OutlinedTextField(
                 value = noHp,
-                onValueChange = { noHp = it },
+                onValueChange = { input ->
+                    // Hanya menerima angka
+                    if (input.all { it.isDigit() }) {
+                        noHp = input
+                    }
+                },
                 label = { Text("Nomor HP") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                isError = noHp.isNotEmpty() && !isNoHpValid,
+                supportingText = {
+                    if (noHp.isNotEmpty() && !isNoHpValid) {
+                        Text(
+                            text = "Minimal 10 angka, maksimal 12 angka",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -91,7 +111,7 @@ fun CheckoutScreen(
             Button(
                 onClick = { showSuccess = true },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = nama.isNotBlank() && alamat.isNotBlank() && noHp.isNotBlank()
+                enabled = isFormValid
             ) {
                 Text("Konfirmasi Pesanan")
             }

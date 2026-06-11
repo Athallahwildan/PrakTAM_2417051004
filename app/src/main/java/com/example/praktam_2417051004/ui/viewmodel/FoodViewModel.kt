@@ -54,7 +54,7 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val fetchedFoods = repository.getFoods()
                 foods = fetchedFoods
-                if (fetchedFoods.isEmpty()) isError = true
+                isError = fetchedFoods.isEmpty()
             } catch (e: Exception) {
                 isError = true
             } finally {
@@ -136,15 +136,21 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
         saveToPrefs()
     }
 
+    fun deleteOrder(orderId: String) {
+        orderHistory = orderHistory.filterNot { it.id == orderId }
+        saveToPrefs()
+    }
+
     fun checkout(namaPembeli: String, totalHarga: Int) {
+        val selectedFoods = cartFoods.filter { selectedCartItems.contains(it.nama) }
         val newOrder = OrderHistory(
-            id = "#${orderHistory.size + 1}",
+            id = UUID.randomUUID().toString(),
             namaPembeli = namaPembeli,
             totalHarga = totalHarga,
-            tanggal = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+            tanggal = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date()),
+            items = selectedFoods
         )
         orderHistory = orderHistory + newOrder
-        // Remove only selected items from cart
         cartFoods = cartFoods.filterNot { selectedCartItems.contains(it.nama) }
         selectedCartItems = emptySet()
         saveToPrefs()

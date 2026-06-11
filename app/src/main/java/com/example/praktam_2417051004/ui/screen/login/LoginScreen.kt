@@ -2,6 +2,7 @@ package com.example.praktam_2417051004.ui.screen.login
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -57,7 +58,8 @@ fun LoginScreen(
             onValueChange = { username = it; showError = false },
             label = { Text("Username") },
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            shape = RoundedCornerShape(24.dp)
         )
         
         Spacer(modifier = Modifier.height(16.dp))
@@ -68,7 +70,8 @@ fun LoginScreen(
             label = { Text("Password") },
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation(),
-            singleLine = true
+            singleLine = true,
+            shape = RoundedCornerShape(24.dp)
         )
         
         if (showError) {

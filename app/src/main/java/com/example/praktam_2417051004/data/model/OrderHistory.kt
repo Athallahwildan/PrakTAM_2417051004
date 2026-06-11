@@ -4,5 +4,6 @@ data class OrderHistory(
     val id: String,
     val namaPembeli: String,
     val totalHarga: Int,
-    val tanggal: String
+    val tanggal: String,
+    val items: List<Cemil> = emptyList()
 )
